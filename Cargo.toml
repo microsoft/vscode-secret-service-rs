@@ -13,7 +13,7 @@ rust-version = "1.60.0"
 
 # The async runtime features mirror those of `zbus` for compatibility.
 [features]
-default = ["async-io", "rs-crypto"]
+default = ["async-io", "openssl"]
 async-io = ["zbus/async-io"]
 tokio = ["zbus/tokio"]
 rs-crypto = ["dep:aes", "dep:block-modes", "dep:sha2", "dep:hkdf"]
