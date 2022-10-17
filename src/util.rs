@@ -60,7 +60,7 @@ pub(crate) fn format_secret(
         let mut aes_iv = [0; 16];
         rng.fill(&mut aes_iv);
 
-        let encrypted_secret = encrypt(secret, &session.get_aes_key()[..], &aes_iv)?;
+        let encrypted_secret = encrypt(secret, &session.get_aes_key()[..], &aes_iv);
 
         // Construct secret struct
         let parameters = aes_iv.to_vec();

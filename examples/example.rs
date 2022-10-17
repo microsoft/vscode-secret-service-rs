@@ -12,7 +12,7 @@ use std::{collections::HashMap, str};
 
 fn main() {
     // Initialize secret service
-    let ss = SecretService::new(EncryptionType::Plain).unwrap();
+    let ss = SecretService::new(EncryptionType::Dh).unwrap();
 
     // navigate to default collection
     let collection = ss.get_default_collection().unwrap();

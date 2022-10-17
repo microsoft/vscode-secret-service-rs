@@ -8,24 +8,36 @@
 // Contains encryption and decryption using aes.
 // Could also contain setting aes key
 
-use aes::Aes128;
-use block_modes::block_padding::Pkcs7;
-use block_modes::{BlockMode, Cbc};
+use crate::error::{Result, Error};
 
-use crate::error::Result;
+pub fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
+    use openssl::cipher::Cipher;
+    use openssl::cipher_ctx::CipherCtx;
 
-type Aes128Cbc = Cbc<Aes128, Pkcs7>;
+    let mut ctx = CipherCtx::new().expect("cipher creation should not fail");
+    ctx.encrypt_init(Some(Cipher::aes_128_cbc()), Some(key), Some(iv))
+        .expect("cipher init should not fail");
 
-pub fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-    let cipher = Aes128Cbc::new_from_slices(key, iv)?;
-    let cipher_text = cipher.encrypt_vec(data);
-
-    Ok(cipher_text)
+    let mut output = vec![];
+    ctx.cipher_update_vec(data, &mut output)
+        .expect("cipher update should not fail");
+    ctx.cipher_final_vec(&mut output)
+        .expect("cipher final should not fail");
+    output
 }
 
 pub fn decrypt(encrypted_data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-    let cipher = Aes128Cbc::new_from_slices(key, iv)?;
-    let decrypted = cipher.decrypt_vec(encrypted_data)?;
+    use openssl::cipher::Cipher;
+    use openssl::cipher_ctx::CipherCtx;
 
-    Ok(decrypted)
+    let mut ctx = CipherCtx::new().expect("cipher creation should not fail");
+    ctx.decrypt_init(Some(Cipher::aes_128_cbc()), Some(key), Some(iv))
+        .expect("cipher init should not fail");
+
+    let mut output = vec![];
+    ctx.cipher_update_vec(encrypted_data, &mut output)
+        .map_err(|_| Error::Crypto("message decryption failed".to_string()))?;
+    ctx.cipher_final_vec(&mut output)
+        .map_err(|_| Error::Crypto("message decryption failed".to_string()))?;
+    Ok(output)
 }

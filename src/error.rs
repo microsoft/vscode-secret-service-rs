@@ -70,18 +70,6 @@ impl error::Error for Error {
     }
 }
 
-impl From<block_modes::BlockModeError> for Error {
-    fn from(_err: block_modes::BlockModeError) -> Error {
-        Error::Crypto("Block mode error".into())
-    }
-}
-
-impl From<block_modes::InvalidKeyIvLength> for Error {
-    fn from(_err: block_modes::InvalidKeyIvLength) -> Error {
-        Error::Crypto("Invalid Key Iv Lengt".into())
-    }
-}
-
 impl From<zbus::Error> for Error {
     fn from(err: zbus::Error) -> Error {
         Error::Zbus(err)

@@ -21,7 +21,6 @@ use crate::error::Result;
 use crate::proxy::service::ServiceProxy;
 use crate::ss::{ALGORITHM_DH, ALGORITHM_PLAIN};
 
-use hkdf::Hkdf;
 use lazy_static::lazy_static;
 use num::{
     bigint::BigUint,
@@ -30,7 +29,6 @@ use num::{
     FromPrimitive,
 };
 use rand::{rngs::OsRng, Rng};
-use sha2::Sha256;
 use std::convert::TryInto;
 use zvariant::OwnedObjectPath;
 
@@ -119,14 +117,11 @@ impl Session {
                 // input_keying_material
                 let ikm = common_secret_padded;
                 let salt = None;
-                let info = [];
 
                 // output keying material
                 let mut okm = [0; 16];
 
-                let (_, hk) = Hkdf::<Sha256>::extract(salt, &ikm);
-                hk.expand(&info, &mut okm)
-                    .expect("hkdf expand should never fail");
+                hkdf(ikm, salt, &mut okm);
 
                 let aes_key = okm.to_vec();
 
@@ -149,6 +144,25 @@ impl Session {
     pub fn get_aes_key(&self) -> Vec<u8> {
         self.aes_key.clone().unwrap()
     }
+}
+
+fn hkdf(ikm: Vec<u8>, salt: Option<&[u8]>, okm: &mut [u8]) {
+    let mut ctx = openssl::pkey_ctx::PkeyCtx::new_id(openssl::pkey::Id::HKDF)
+        .expect("hkdf context should not fail");
+    ctx.derive_init().expect("hkdf derive init should not fail");
+    ctx.set_hkdf_md(openssl::md::Md::sha256())
+        .expect("hkdf set md should not fail");
+
+    ctx.set_hkdf_key(&ikm)
+        .expect("hkdf set key should not fail");
+    if let Some(salt) = salt {
+        ctx.set_hkdf_salt(salt)
+            .expect("hkdf set salt should not fail");
+    }
+
+    ctx.add_hkdf_info(&[]).unwrap();
+    ctx.derive(Some(okm))
+        .expect("hkdf expand should never fail");
 }
 
 /// from https://github.com/plietar/librespot/blob/master/core/src/util/mod.rs#L53
