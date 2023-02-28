@@ -19,4 +19,4 @@ zbus = "1.9.2"
 zbus_macros = "1.7.0"
 zvariant = "2.4.0"
 zvariant_derive = "2.4.0"
-openssl = { version = "^0.10.40", features = ["vendored"] }
+openssl = { version = "^0.10.40" }
